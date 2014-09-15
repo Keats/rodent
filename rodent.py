@@ -63,6 +63,10 @@ def start_camera(folder, interval, until=None):
         img.save(filepath, optimize=True, quality=80)
 
         if until:
+            # If we want to watch something overnight, now will be greater before midnight
+            if until_hour < 12 and now.hour > 12:
+                time.sleep(interval)
+                continue
             if now.hour > until_hour or (now.hour == until_hour and now.minute >= until_minutes):
                 break
 
@@ -93,6 +97,9 @@ def make_video(folder):
 
     video.release()
 
+
+def motion_detection():
+    pass
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
