@@ -1,8 +1,24 @@
-import cv2
+"""
+Rodent
+
+Usage:
+  rodent.py capture [--until=<time>]
+  rodent.py make_video
+  rodent.py automate [--until=<time>]
+
+Options:
+  -h --help          Show this screen
+  --until=<time>     Until when to record, needs to be a HH:MM format (ie 12:45)
+
+"""
+
 import datetime
 import os
 import time
 import sys
+
+import cv2
+from docopt import docopt
 
 
 def clear_directory():
@@ -70,13 +86,12 @@ def make_video():
 
 
 if __name__ == "__main__":
-    # Not checking length of args, better give the right ones
-    command = sys.argv[1]
-    if command == 'capture':
-        start_camera()
-    elif command == 'make_video':
+    arguments = docopt(__doc__)
+
+    if arguments['capture']:
+        start_camera(arguments['--until'])
+    elif arguments['make_video']:
         make_video()
-    elif command == 'automate':
-        until = sys.argv[2]
-        start_camera(until)
+    elif arguments['automate']:
+        start_camera(arguments['--until'])
         make_video()
