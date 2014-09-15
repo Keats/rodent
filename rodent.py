@@ -72,14 +72,17 @@ def start_camera(folder, interval, until=None):
 
 
 def make_video(folder):
+    """
+    Takes all the pics in the folder given and make a video
+    out of it.
+    """
     # Sorting on dates, ISO ftw
-    filenames = sorted(os.listdir('photos'))
+    filenames = sorted(os.listdir(folder))
 
     # Find out size of the pictures we're taking
-    #filename = '%s/%s.png'
     first_pic = cv2.imread('%s/%s' % (folder, filenames[0]))
 
-    # first_pic.shape gives a tuple (height, width, layer)
+    # shape gives a tuple (height, width, layer)
     height, width, _ = first_pic.shape
     # magic below, might need to change the codec for your own webcam
     fourcc = cv2.cv.CV_FOURCC(*'XVID')
