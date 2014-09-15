@@ -10,7 +10,7 @@ Options:
   -h --help               Show this screen
   --until=<time>          Until when to record, needs to be a HH:MM format (ie 12:45)
   --folder=<folder>       The folder in which the pictures are stored [default: photos]
-  --interval=<interval>   The interval between 2 photos [default: 20]
+  --interval=<interval>   The interval between 2 photos [default: 1]
 """
 
 import datetime
@@ -20,6 +20,7 @@ import sys
 
 import cv2
 from docopt import docopt
+from PIL import Image
 
 
 def clear_directory(folder):
@@ -40,7 +41,7 @@ def start_camera(folder, interval, until=None):
     clear_directory(folder)
 
     camera = cv2.VideoCapture(0)
-    filename = '%s/%s.png'
+    filename = '%s/%s.jpg'
     number = 0
 
     if until:
@@ -53,7 +54,13 @@ def start_camera(folder, interval, until=None):
         _, image = camera.read()
         now = datetime.datetime.now()
         print 'Taking picture number %d at %s' % (number, now.isoformat())
-        cv2.imwrite(filename % (folder, now), image)
+        # Tried [cv2.cv.CV_IMWRITE_PNG_COMPRESSION, 3] but still atrocious compression
+        filepath = filename % (folder, now)
+        cv2.imwrite(filepath, image)
+
+        # Resave it with pillow to do a better compression
+        img = Image.open(filepath)
+        img.save(filepath, optimize=True, quality=80)
 
         if until:
             if now.hour > until_hour or (now.hour == until_hour and now.minute >= until_minutes):
