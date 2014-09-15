@@ -2,14 +2,15 @@
 Rodent
 
 Usage:
-  rodent.py capture [--until=<time>]
-  rodent.py make_video
-  rodent.py automate [--until=<time>]
+  rodent.py capture [--until=<time>] [--folder=<folder>] [--interval=<interval>]
+  rodent.py make_video [--folder=<folder>]
+  rodent.py automate [--until=<time>] [--folder=<folder>] [--interval=<interval>]
 
 Options:
-  -h --help          Show this screen
-  --until=<time>     Until when to record, needs to be a HH:MM format (ie 12:45)
-
+  -h --help               Show this screen
+  --until=<time>          Until when to record, needs to be a HH:MM format (ie 12:45)
+  --folder=<folder>       The folder in which the pictures are stored [default: photos]
+  --interval=<interval>   The interval between 2 photos [default: 20]
 """
 
 import datetime
@@ -21,24 +22,25 @@ import cv2
 from docopt import docopt
 
 
-def clear_directory():
+def clear_directory(folder):
     """
     Delete all the pics in the photos directory
     """
-    for filename in os.listdir('photos'):
-        os.remove('photos/%s' % filename)
+    for filename in os.listdir(folder):
+        os.remove('%s/%s' % (folder, filename))
 
-def start_camera(until=None, interval=1):
+
+def start_camera(folder, interval, until=None):
     """
     Start taking pictures every interval.
     If until is specified, it will take pictures
     until that time is reached (24h format).
     Needs to be of the following format: HH:MM
     """
-    clear_directory()
+    clear_directory(folder)
 
     camera = cv2.VideoCapture(0)
-    filename = 'photos/%s.png'
+    filename = '%s/%s.png'
     number = 0
 
     if until:
@@ -51,7 +53,7 @@ def start_camera(until=None, interval=1):
         _, image = camera.read()
         now = datetime.datetime.now()
         print 'Taking picture number %d at %s' % (number, now.isoformat())
-        cv2.imwrite(filename % now, image)
+        cv2.imwrite(filename % (folder, now), image)
 
         if until:
             if now.hour > until_hour or (now.hour == until_hour and now.minute >= until_minutes):
@@ -59,39 +61,40 @@ def start_camera(until=None, interval=1):
 
         time.sleep(interval)
 
-    # We don't really care here, we will Ctrl+C anyway
     del(camera)
 
 
-def make_video():
-    # Cheating a bit, dimensions are 640x380
+def make_video(folder):
     # Sorting on dates, ISO ftw
     filenames = sorted(os.listdir('photos'))
 
     # Find out size of the pictures we're taking
-    filename = 'photos/%s.png'
-    first_pic = cv2.imread('photos/%s' % filenames[0])
+    #filename = '%s/%s.png'
+    first_pic = cv2.imread('%s/%s' % (folder, filenames[0]))
 
     # first_pic.shape gives a tuple (height, width, layer)
     height, width, _ = first_pic.shape
+    # magic below, might need to change the codec for your own webcam
     fourcc = cv2.cv.CV_FOURCC(*'XVID')
-
     video = cv2.VideoWriter('output.avi', fourcc, 10, (width, height))
 
     for filename in filenames:
-        video.write(cv2.imread('photos/%s' % filename))
+        video.write(cv2.imread('%s/%s' % (folder, filename)))
 
     video.release()
-    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
 
+    folder = arguments['--folder']
+    interval = int(arguments['--interval'])
+    until = arguments['--until']
+
     if arguments['capture']:
-        start_camera(arguments['--until'])
+        start_camera(folder, interval, until)
     elif arguments['make_video']:
-        make_video()
+        make_video(folder)
     elif arguments['automate']:
-        start_camera(arguments['--until'])
-        make_video()
+        start_camera(folder, interval, until)
+        make_video(folder)
