@@ -9,9 +9,9 @@ See title
 pip install -r requirements.txt
 ```
 
-OpenCV is not pip installed so follow the instructions for your OS at http://opencv.org/downloads.html (you can install it in a virtualenv by following https://medium.com/@manuganji/installation-of-opencv-numpy-scipy-inside-a-virtualenv-bf4d82220313).  
+OpenCV is not pip installable so follow the instructions for your OS at [the download page](http://opencv.org/downloads.html) (you can install it in a virtualenv by following this post: [Installation of Opencv, numpy, scipy inside a virtualenv](https://medium.com/@manuganji/installation-of-opencv-numpy-scipy-inside-a-virtualenv-bf4d82220313)).  
 
-Don't forget to install dependencies (jpg lib and ffmpeg or something that works with opencv).  
+Don't forget to install dependencies (jpg lib and ffmpeg or something that works with opencv, libav for Ubuntu).  
 On Ubuntu:
 
 ```bash
