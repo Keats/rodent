@@ -3,7 +3,8 @@
 ## Goal
 See title.  
 Takes picture every time interval (defaults to one picture a second) and make a video of it at the end.  
-Motion detection to follow.  
+It has a motion detection mode that will detect motion and put a purple rectangle around it.  
+By default it does not do a video at the end but you can call make_video manually if you want to.
 
 ## Installation
 
