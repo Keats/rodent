@@ -5,6 +5,7 @@ Usage:
   rodent.py capture [--until=<time>] [--folder=<folder>] [--interval=<interval>]
   rodent.py make_video [--folder=<folder>]
   rodent.py automate [--until=<time>] [--folder=<folder>] [--interval=<interval>]
+  rodent.py motion [--until=<time>] [--folder=<folder>]
 
 Options:
   -h --help               Show this screen
@@ -31,7 +32,7 @@ def clear_directory(folder):
         os.remove('%s/%s' % (folder, filename))
 
 
-def start_camera(folder, interval, until=None):
+def start_camera(camera, folder, interval, until=None):
     """
     Start taking pictures every interval.
     If until is specified, it will take pictures
@@ -40,7 +41,6 @@ def start_camera(folder, interval, until=None):
     """
     clear_directory(folder)
 
-    camera = cv2.VideoCapture(0)
     filename = '%s/%s.jpg'
     number = 0
 
@@ -90,7 +90,7 @@ def make_video(folder):
     height, width, _ = first_pic.shape
     # magic below, might need to change the codec for your own webcam
     fourcc = cv2.cv.CV_FOURCC(*'XVID')
-    video = cv2.VideoWriter('output.avi', fourcc, 10, (width, height))
+    video = cv2.VideoWriter('output.avi', fourcc, 60, (width, height))
 
     for filename in filenames:
         video.write(cv2.imread('%s/%s' % (folder, filename)))
@@ -98,8 +98,81 @@ def make_video(folder):
     video.release()
 
 
-def motion_detection():
-    pass
+def motion_detection(camera, folder, until):
+    clear_directory(folder)
+
+    filename = '%s/%s.jpg'
+    if until:
+        until_hour, until_minutes = until.split(':')
+        until_hour = int(until_hour)
+        until_minutes = int(until_minutes)
+
+    previous_image = None
+    current_image = None
+
+    while True:
+        ret, image = camera.read()
+        gray_image = cv2.cvtColor(image, cv2.cv.CV_RGB2GRAY)
+        # Haven't got a previous image, meaning first image at all
+        if previous_image is None:
+            previous_image = gray_image
+            continue
+
+        if current_image is None:
+            current_image = gray_image;
+            continue
+
+        now = datetime.datetime.now()
+
+        difference1 = cv2.absdiff(previous_image, gray_image)
+        difference2 = cv2.absdiff(current_image, gray_image)
+        result = cv2.bitwise_and(difference1, difference2)
+
+        _, result = cv2.threshold(result, 35, 255, cv2.THRESH_BINARY)
+
+
+        # Let's show a square around the detected motion in the original pic
+        result = result.tolist()
+        number_changes = 0
+        # Bear with me with these names
+        # this is going to be used to put a rectangle around where the motion
+        # is
+        low_x = len(result[0])
+        high_x = 0
+        low_y = len(result)
+        high_y = 0
+
+        for i, row in enumerate(result):
+            for j, column in enumerate(row):
+                if column != 255:
+                    continue
+
+                number_changes += 1
+                if low_y > i:
+                    low_y = i
+                if high_y < i:
+                    high_y = i
+
+                if low_x > j:
+                    low_x = j
+                if high_x < j:
+                    high_x = j
+
+        # Don't bother if no pixels changed
+        if number_changes > 1:
+            low_x = low_x - 5 if low_x >= 5 else low_x
+            low_y = low_y - 5 if low_y >= 5 else low_y
+            high_x = high_x + 5 if high_x >= len(result[0]) - 6 else high_x
+            high_y = high_y + 5 if high_y >= len(result) - 6 else high_y
+
+            cv2.rectangle(image, (low_x, low_y), (high_x, high_y), (140, 25, 71), 3) # purple
+            print 'Motion detected ! Taking picture'
+            cv2.imwrite(filename % (folder, now), image)
+
+        previous_image = current_image
+        current_image = gray_image
+
+    del(camera)
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
@@ -108,10 +181,17 @@ if __name__ == "__main__":
     interval = int(arguments['--interval'])
     until = arguments['--until']
 
-    if arguments['capture']:
-        start_camera(folder, interval, until)
-    elif arguments['make_video']:
-        make_video(folder)
-    elif arguments['automate']:
-        start_camera(folder, interval, until)
-        make_video(folder)
+    camera = cv2.VideoCapture(0)
+
+    try:
+        if arguments['capture']:
+            start_camera(camera, folder, interval, until)
+        elif arguments['make_video']:
+            make_video(folder)
+        elif arguments['automate']:
+            start_camera(camera, folder, interval, until)
+            make_video(folder)
+        elif arguments['motion']:
+            motion_detection(camera, folder, until)
+    except KeyboardInterrupt:
+        del(camera)
