@@ -90,7 +90,7 @@ def make_video(folder):
     height, width, _ = first_pic.shape
     # magic below, might need to change the codec for your own webcam
     fourcc = cv2.cv.CV_FOURCC(*'XVID')
-    video = cv2.VideoWriter('output.avi', fourcc, 60, (width, height))
+    video = cv2.VideoWriter('output.avi', fourcc, 30, (width, height))
 
     for filename in filenames:
         video.write(cv2.imread('%s/%s' % (folder, filename)))
@@ -111,6 +111,7 @@ def motion_detection(camera, folder, until):
     current_image = None
 
     while True:
+        now = datetime.datetime.now()
         ret, image = camera.read()
         gray_image = cv2.cvtColor(image, cv2.cv.CV_RGB2GRAY)
         # Haven't got a previous image, meaning first image at all
@@ -121,8 +122,6 @@ def motion_detection(camera, folder, until):
         if current_image is None:
             current_image = gray_image;
             continue
-
-        now = datetime.datetime.now()
 
         difference1 = cv2.absdiff(previous_image, gray_image)
         difference2 = cv2.absdiff(current_image, gray_image)
@@ -171,6 +170,17 @@ def motion_detection(camera, folder, until):
 
         previous_image = current_image
         current_image = gray_image
+
+
+        if until:
+            # If we want to watch something overnight, now will be greater before midnight
+            if until_hour < 12 and now.hour > 12:
+                time.sleep(interval)
+                continue
+            if now.hour > until_hour or (now.hour == until_hour and now.minute >= until_minutes):
+                break
+
+        time.sleep(0.1)
 
     del(camera)
 
