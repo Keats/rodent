@@ -1,7 +1,6 @@
 import os
 
 import cv2
-from PIL import Image
 
 
 def clear_directory(folder):
@@ -19,11 +18,11 @@ def save_image(image, folder, now):
     """
     filename = '%s/%s.jpg'
     filepath = filename % (folder, now)
-    cv2.imwrite(filepath, image)
+    cv2.imwrite(filepath, image, [cv2.cv.CV_IMWRITE_JPEG_QUALITY, 80])
 
     # Resave it with pillow to do a better compression
-    img = Image.open(filepath)
-    img.save(filepath, optimize=True, quality=80)
+    # img = Image.open(filepath)
+    # img.save(filepath, optimize=True, quality=80)
 
 
 def time_over(until, now):

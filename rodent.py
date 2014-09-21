@@ -58,6 +58,18 @@ def make_video(folder):
     # Sorting on dates, ISO ftw
     filenames = sorted(os.listdir(folder))
 
+    # Completely arbitrary values, probably will need to fix that later
+    # If the video is too fast or too slow, change the fps value manually
+    fps = 2
+    if 20 <= len(filenames) <= 40:
+        fps = 4
+    elif 41 <= len(filenames) <= 200:
+        fps = 10
+    elif 201 <= len(filenames) <= 500:
+        fps = 20
+    elif len(filenames) > 500:
+        fps = 40
+
     # Find out size of the pictures we're taking
     first_pic = cv2.imread('%s/%s' % (folder, filenames[0]))
 
@@ -66,7 +78,7 @@ def make_video(folder):
 
     # magic below, might need to change the codec for your own webcam
     fourcc = cv2.cv.CV_FOURCC(*'XVID')
-    video = cv2.VideoWriter('output.avi', fourcc, 20, (width, height))
+    video = cv2.VideoWriter('output.avi', fourcc, fps, (width, height))
 
     for filename in filenames:
         video.write(cv2.imread('%s/%s' % (folder, filename)))
@@ -98,8 +110,7 @@ def motion_detection(camera, folder, until):
 
         # Basic threshold, turn the bitwise_and into a black or white (haha)
         # result, white (255) being a motion
-        _, result = cv2.threshold(result, 35, 255, cv2.THRESH_BINARY)
-
+        _, result = cv2.threshold(result, 40, 255, cv2.THRESH_BINARY)
 
         # Let's show a square around the detected motion in the original pic
         low_point, high_point = utils.find_motion_boundaries(result.tolist())
