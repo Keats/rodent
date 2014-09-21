@@ -1,5 +1,7 @@
 # Find out who/what the fuck is eating my lunch at night
 
+![Rodent](/logo.png)
+
 ## Goal
 See title.  
 Takes picture every time interval (defaults to one picture a second) and make a video of it at the end.  
